@@ -1,222 +1,452 @@
-import java.util.Random;
 
-public class Treap {
+import java.util.*;
+
+public class Treap<T extends Comparable<T>> implements Set<T> {
     //x - ключ y - приоритет
-    public int x;
-    public int y;
-    public int Size;
+    private T x;
+    private Integer y = null;
+    private int size = 0;
 
-    public Treap Left;
-    public Treap Right;
+    private Treap<T> Left = null;
+    private Treap<T> Right = null;
 
-    public Treap(int x, int y, Treap left, Treap right) {
+
+    Treap(){
+        this.x = null;
+    }
+
+    public Treap(T x, Integer y, Treap<T> Left, Treap<T> Right){
         this.x = x;
         this.y = y;
-        this.Left = left;
-        this.Right = right;
+        this.Left = Left;
+        this.Right = Right;
     }
 
-    public Treap() {
+    /**
+     * Размер дерева
+     */
 
+    @Override
+    public int size() {
+        return size;
     }
-    
-    // для создания дерева из одного узла (в методе add)
-    public Treap(int x) {
-        Random random = new Random();
-        this.x = x;
-        this.y = random.nextInt(100);
-        Size = 1;
+
+    /**
+     * Удаление дерева
+     */
+
+    @Override
+    public void clear() {
+        this.x = null;
+        this.y = null;
         this.Left = null;
-        this.Right = null;
-    }
-
-
-    public int SizeOf(Treap treap) {
-        return treap == null ? 0 : treap.Size;
+        this.Right= null;
+        this.size = 0;
     }
 
     /**
-     * Вычисление размера дерева
+     * Существует ли дерево
      */
 
-    public int SizeOfTreap(Treap treap) {
-        int x;
-        int y;
-        if(treap.Right == null ) x = 0;
-        else x = treap.Right.Size;
-        if(treap.Left == null ) y = 0;
-        else y = treap.Left.Size;
-        return  x + y + 1;
-    }
-    
-
-    public void Recalc() {
-        Size = SizeOf(Left) + SizeOf(Right) + 1;
+    public boolean isEmpty() {
+        return x == null;
     }
 
     /**
-     * Слияние
+     * Содержится ли элемент в дереве
      */
 
-    public Treap Merge(Treap L, Treap R) {
+    @Override
+    public boolean contains(Object o) {
+        @SuppressWarnings("unchecked")
+        T t = (T) o;
+        if (o == null)
+            return false;
+        Treap<T> find = find(t);
+        return find != null;
+    }
 
-        if (L == null) return R;
-        if (R == null) return L;
+    /**
+     * Содержатся ли все элементы коллекции в дереве
+     */
 
-        Treap result;
+    @Override
+    public boolean containsAll(Collection<?> c) {
+        for (Object element : c)
+            if (!contains(element))
+                return false;
+        return true;
+    }
+
+    /**
+     * Поиск элемента в дереве, выводит дерево, начиная с этого элемента
+     */
+
+    Treap<T> find(T value) {
+        if (this.x == null)
+            return null;
+        return find(this, value);
+    }
+
+
+    private Treap<T> find(Treap<T> start, T value) {
+        int comp = value.compareTo(start.x);
+        if (comp == 0)
+            return start;
+        else if (comp < 0) {
+            if (start.Left == null || start.Left.x == null) return null;
+            return find(start.Left, value);
+        }
+        else {
+            if (start.Right == null || start.Right.x == null) return null;
+            return find(start.Right, value);
+        }
+    }
+
+
+
+    /**
+     * Слияние двух деревьев
+     */
+
+    public Treap<T> Merge(Treap<T> L, Treap<T> R) {
+        if (L == null || L.x == null) {
+            return R;
+        }
+        if (R == null || R.x == null) {
+            return L;
+        }
+
+        Treap<T> result;
 
         if (L.y > R.y) { //если приотритет корня левого больше приоритета корня правого
             //R полностью добавляется в правое поддерево так как ключи у него больше
             // L.left полностью добавляется в левое поддерево так как ключи меньше
             // L. right добавится в правое, но перед этим сольется с R
-            Treap newR = Merge(L.Right, R);
-            result = new Treap(L.x, L.y, L.Left, newR);
-        } else {
-            Treap newL = Merge(L, R.Left);
-            result = new Treap(R.x, R.y, newL, R.Right);
+            Treap<T> newR = Merge(L.Right, R);
+            result = new Treap<>(L.x, L.y, L.Left, newR);
+
         }
-        result.Recalc();
+        else {
+            //если приотритет корня левого меньше приоритета корня правого
+            Treap<T> newL = Merge(L, R.Left);
+            result = new Treap<>(R.x, R.y, newL, R.Right);
+        }
         return result;
+    }
+
+    public static class Pair<K, V> {
+
+        private final K element0;
+        private final V element1;
+
+
+        public Pair(K element0, V element1) {
+            this.element0 = element0;
+            this.element1 = element1;
+        }
+
+        public K getElement0() {
+            return element0;
+        }
+
+        public V getElement1() {
+            return element1;
+        }
+
     }
 
     /**
      * Разделение
      */
 
-    public Treap[] Split(int x) {
+    private Pair<Treap<T>, Treap<T>> Split(T x){
         // одно дерево будет с вершиной > x, другое < x
-        Treap newTree = null;
-        Treap L, R;
-        if (this.x <= x) { // если оказалось, что < x
+        Treap<T> newTreap = new Treap<>();
+        Treap<T> L, R;
+        int comp = this.x.compareTo(x);
+        if (comp <= 0) { // если оказалось, что <= x
             //тогда все элементы левого поддерева окажутся в L так как все ключи < x
             //элементы правого поддерева частично окажутся в правом L(когда ключи < x), а частично в R(когда ключи >x)
-            if (Right == null)
+            if (Right == null || Right.x == null)
                 R = null;
             else {
-                Treap[] afterSplit = Right.Split(x);
-                newTree = afterSplit[0];
-                R = afterSplit[1];
+                Pair<Treap<T>, Treap<T>> afterSplit =  Right.Split(x);
+                R = afterSplit.getElement1();
+                newTreap = afterSplit.getElement0();
             }
-            L = new Treap(this.x, y, Left, newTree);
-            L.Recalc();
-        } else {
-            if (Left == null)
+            L = new Treap<>(this.x, y, Left, newTreap);
+        }
+        else  {
+            if (Left == null || Left.x == null)
                 L = null;
             else {
-                Treap[] afterSplit = Left.Split(x);
-                L = afterSplit[0];
-                newTree = afterSplit[1];
-
+                Pair<Treap<T>, Treap<T>> afterSplit = Left.Split(x);
+                L = afterSplit.getElement0();
+                newTreap = afterSplit.getElement1();
             }
-            R = new Treap(this.x, y, newTree, Right);
-            R.Recalc();
+            R = new Treap<>(this.x, y, newTreap, Right);
         }
-        Treap[] result = new Treap[2];
-        result[0] = L;
-        result[1] = R;
-        return result;
+        return new Pair<>(L, R);
     }
 
     /**
-     * Содержится ли  элемент в дереве
+     * Добавление элемента c приоритетом
      */
 
-    public boolean contains(int value) {
-        if (this.x == value) {
-            return true;
+    boolean add(T x, Integer y) {
+        //если такой элемент уже есть
+        if (x == null || contains(x))
+            return false;
+        //если дерево пустое и мы добавляем первый эелемент
+        if (isEmpty() || this.x == null) {
+            this.x = x;
+            this.y = y;
+            this.Left = new Treap<>();
+            this.Right = new Treap<>();
         }
-        if (this.x > value)
-            if (Left != null)
-                return Left.contains(value);
-        if (this.x < value)
-            if (Right != null)
-                return Right.contains(value);
-        return false;
-    }
+        else {
+            Pair<Treap<T>, Treap<T>> afterSplit = Split(x);
+            Treap<T> l = afterSplit.getElement0();
+            Treap<T> r = afterSplit.getElement1();
+            Treap<T> oneVertex = new Treap<>(x, y, new Treap<T>(), new Treap<T>());
+            Treap<T> treap = Merge(Merge(l, oneVertex), r);
 
-    /**
-     * Добавление
-     */
-
-    public void add(int x) {
-        //разделим дерево на два(левое и правое)
-        Treap[] t = Split(x);
-        Treap l = t[0];
-        Treap r = t[1];
-        //создаем из элемента дерево
-        Treap oneVertex = new Treap(x);
-        //соединим левое и элемент, который добавляем
-        //соединим все с правым
-        Treap treap = Merge(Merge(l, oneVertex), r);
-        this.x = treap.x;
-        this.y = treap.y;
-        this.Right = treap.Right;
-        this.Left = treap.Left;
-    }
-
-    /**
-     * Удаление
-     */
-
-    public void remove(int x) {
-        //1) разделим на леове и правое по ключу x - 1
-        //<= x- 1 в левом, > в правом (тут и искомый элемент)
-        Treap[] afterSplit = Split(x - 1);
-        Treap L = afterSplit[0];
-        Treap R = afterSplit[1];
-        //2) разделим правое по ключу x
-        //искомый будет в левом
-        Treap[] newAfterSplit = R.Split(x);
-        Treap r = newAfterSplit[1];
-        //3) соединим L и r
-        Treap treap = Merge(L, r);
-        this.x = treap.x;
-        this.y = treap.y;
-        this.Right = treap.Right;
-        this.Left = treap.Left;
-    }
-
-    /**
-     * Нахождение k-го элемента (начиная с 0)
-     */
-
-
-    public Integer KthElement(int K) {
-        Treap current = this;
-        while (current != null) {
-            int sizeLeft = SizeOf(current.Left);//смотрим на размер левого поддерева
-
-            if (sizeLeft == K) // если равен к, то отв корень
-                return current.x;
-
-            current = sizeLeft > K ? current.Left : current.Right;// если больше, то спускаемся в левое
-            //наоборот спускаемся в правое
-            if (sizeLeft < K)
-                K -= sizeLeft + 1; // при этом уменьшаем величину к
+            this.x = treap.x;
+            this.y = treap.y;
+            this.Left = treap.Left;
+            this.Right = treap.Right;
         }
-        return null;
+        size++;
+        return true;
     }
+
+
+    /**
+     * Добавление элемента без заданного приоритета, приоритет в диапазоне [-100; 100]
+     */
+
+    @Override
+    public boolean add(T value) {
+        return add(value, (int)(Math.random()*(200+1) - 100));
+    }
+
+    /**
+     * Добавление всех элементов из коллекции
+     */
+
+    @Override
+    public boolean addAll(Collection<? extends T> c) {
+        boolean bool = false;
+        for (T t : c)
+            if (this.add(t))
+                bool = true;
+        return bool;
+    }
+
+    /**
+     * Нахождение родителя узла, выводит дерево, начиная с родителя элемента
+     */
+
+    public Treap<T> findParent(T value) {
+        //если элемента нет в дереве
+        if (!contains(value))
+            throw new IllegalArgumentException("Элемента нет в дереве");
+        //если дерево пустое
+        if (this.x == null) return null;
+        return findParent(this, value);
+    }
+
+    public Treap<T> findParent(Treap<T> start, T value) {
+        //нахождение в дереве start
+        int comp = value.compareTo(start.x);
+        if(comp == 0)
+            return null;//если элемент оказался корнем
+        else if (comp < 0) {
+            if (start.Left == null) return start;
+            if (start.Left.x.compareTo(value) == 0) return start;
+            return findParent(start.Left, value);
+        } else {
+            if (start.Right == null) return start;
+            if (start.Right.x.compareTo(value) == 0) return start;
+            return findParent(start.Right, value);
+        }
+    }
+
+    /**
+     * Удаление элемента
+     */
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean remove(Object o) {
+        T value = (T) o;
+        //если дерево пустое или в нем нет такого элемента
+        if (this.x == null || !this.contains(value))
+            return false;
+        //находим сам элемент
+        Treap<T> treap = find(value);
+        //удаляем корень
+        Treap<T> result = Merge(treap.Left, treap.Right);
+        //находим родителя
+        Treap<T> parent = findParent(value);
+        //если элемент был корнем
+        if (parent == null || parent.x == null) {
+            this.x = result.x;
+            this.y = result.y;
+            this.Left = result.Left;
+            this.Right = result.Right;
+        }
+        else {
+            //если наш элемента слева от родителя
+            if (parent.Left != null && parent.Left.x != null && parent.Left.x.compareTo(value) == 0) {
+                parent.Left.x = result.x;
+                parent.Left.y = result.y;
+                parent.Left.Left = result.Left;
+                parent.Left.Right = result.Right;
+            }
+            //если наш элемента справа от родителя
+            else {
+                parent.Right.x = result.x;
+                parent.Right.y = result.y;
+                parent.Right.Left = result.Left;
+                parent.Right.Right = result.Right;
+            }
+        }
+        size--;
+        return true;
+    }
+
+    /**
+     * Удаление всех элементов из дерева
+     */
+
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        boolean bool = false;
+        for (Object t : c)
+            if (this.contains(t)) {
+                this.remove(t);
+                bool = true;
+            }
+        return bool;
+    }
+
+    /**
+     * Итератор (как в бинарном дереве)
+     */
+
+    @Override
+    public Iterator<T> iterator() {
+        return new TreapIterator();
+    }
+
+    public class TreapIterator implements Iterator<T> {
+
+        private final Deque<Treap<T>> deque = new ArrayDeque<>();
+        private Treap<T> current = null;
+
+        public TreapIterator() {
+            Treap<T> treap = Treap.this;
+            while (treap != null && treap.x != null) {
+                deque.push(treap);
+                treap = treap.Left;
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !deque.isEmpty();
+        }
+
+        @Override
+        public T next() {
+            current = nextTreap();
+            if (current == null) throw new NoSuchElementException();
+            return current.x;
+        }
+
+        private Treap<T> nextTreap() {
+            Treap<T> treap = deque.pop();
+            current = treap;
+            if (treap.Right != null && treap.Right.x != null) {
+                treap = treap.Right;
+                while (treap != null && treap.x != null) {
+                    deque.push(treap);
+                    treap = treap.Left;
+                }
+            }
+            return current;
+        }
+
+        @Override
+        public void remove() {
+            Treap.this.remove(current.x);
+        }
+    }
+
+    /**
+     * Элементы дерева помещаются в массив
+     */
+
+    @Override
+    public Object[] toArray() {
+        Object[] array = new Object[size()];
+        Iterator<T> iterator = iterator();
+        for (int i = 0; i < size(); i++)
+            if (iterator.hasNext()) {
+                array[i] = iterator.next();
+            }
+        return array;
+    }
+
+    /**
+     * Элементы дерева помещаются в массив элементов
+     */
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T1> T1[] toArray(T1[] a) {
+        Object[] array = toArray();
+        if (a.length < size)
+            return (T1[]) Arrays.copyOf(array, size, a.getClass());
+        System.arraycopy(array, 0, a, 0, size);
+        if (a.length > size)
+            a[size] = null;
+        return a;
+    }
+
+    /**
+     * Удаляет те элементы, которые есть в коллекции
+     */
+
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        boolean bool = false;
+        Iterator<T> iterator = iterator();
+        while (iterator.hasNext())
+            if (!c.contains(iterator.next())) {
+                iterator.remove();
+                bool = true;
+            }
+        return bool;
+    }
+
 
     /**
      * Нахождение роста дерева(длина наибольшей ветки)
      */
 
-    public Integer deep(Treap treap) {
-        Treap R = treap.Right;
-        Treap L = treap.Left;
-        int deep = 1;
-        int right = 0;
-        int left = 0;
-        if (L == null && R == null) { //если дошли до конца
-            return deep;
-        }
-        if (L != null)
-            right += deep + deep(L);
-        if (R != null)
-            left += deep + deep(R);
-        return Math.max(left, right);
+    public int deep(Treap<T> start) {
+        if (start == null || start.x == null)
+            return 0;
+        return Math.max(deep(start.Left), deep(start.Left)) + 1;
     }
 
+    int deep() {
+        return deep(this);
+    }
 
     /**
      * Вывод дерева в строку
@@ -224,6 +454,8 @@ public class Treap {
 
     @Override
     public String toString() {
+        if (this. x == null) return null;
+        if (this. y == null) return null;
         return "Node{" + "x=" + x + ", y=" + y + ", left=" + Left +
                 ", right=" + Right + '}';
     }
@@ -233,9 +465,14 @@ public class Treap {
      */
 
     public static void Print(Treap treap, int level){
-        if (treap == null ) return;
+        if (treap == null ) {
+            return;
+        }
+        if(treap.x == null) return;
+        if(treap.y == null) return;
+
         Print(treap.Right, level + 1);
-        if(level != 0){
+        if (level != 0) {
             for(int i = 0; i < level - 1; i++)
                 System.out.print("|        \t");
             System.out.println("|-----------" + "(" + treap.x + "; " + treap.y + ")");
@@ -245,4 +482,5 @@ public class Treap {
         }
         Print(treap.Left, level + 1);
     }
+
 }

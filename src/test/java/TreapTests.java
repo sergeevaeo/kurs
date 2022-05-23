@@ -1,4 +1,6 @@
 import org.junit.Test;
+
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
@@ -187,10 +189,10 @@ public class TreapTests {
         answer.add(2);
         answer.add(9);
         Treap<Integer> treap = new Treap<>();
-        treap.add(10);
-        treap.add(4);
-        treap.add(2);
-        treap.add(9);
+        treap.add(10, 5);
+        treap.add(4, 1);
+        treap.add(2, 4);
+        treap.add(9, 8);
         treap.removeAll(answer);
         assertEquals(0, treap.size());
     }
@@ -224,10 +226,10 @@ public class TreapTests {
     @Test
     public void removeIterator() {
         Treap<Integer> treap = new Treap<>();
-        treap.add(8);
-        treap.add(1);
-        treap.add(18);
-        treap.add(13);
+        treap.add(8, 1);
+        treap.add(1, 5);
+        treap.add(18, 9);
+        treap.add(13, 8);
         Iterator<Integer> itr = treap.iterator();
         itr.next();
         itr.next();
@@ -251,6 +253,19 @@ public class TreapTests {
     }
 
     @Test
+    public void toArrayTwo() {
+        Treap<Integer> treap = new Treap<>();
+        treap.add(4);
+        treap.add(1);
+        treap.add(64);
+        treap.add(16);
+        Object[] a = treap.toArray();
+        System.out.println(Arrays.toString(treap.toArray(a)));
+
+    }
+
+
+    @Test
     public void rerainAll() {
         HashSet<Integer> answer = new HashSet<>();
         answer.add(10);
@@ -270,9 +285,10 @@ public class TreapTests {
         treap.add(7, 1);
         treap.add(1, 4);
         treap.add(89, 9);
+        treap.add(90, 7);
         treap.add(6, 56);
         int a = treap.deep();
         Treap.Print(treap, 0);
-        assertEquals(a, 2);
+        assertEquals(a, 3);
     }
 }

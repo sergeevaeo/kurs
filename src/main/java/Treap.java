@@ -83,26 +83,26 @@ public class Treap<T extends Comparable<T>> implements Set<T> {
      */
 
     Treap<T> find(T value) {
-        if (this.x == null)
+        if (this.isEmpty())
             return null;
         return find(this, value);
     }
 
-
-    private Treap<T> find(Treap<T> start, T value) {
-        int comp = value.compareTo(start.x);
-        if (comp == 0)
+    //поиск как в бинарном дереве
+    public Treap<T> find(Treap<T> start, T value) {
+        int comparison = value.compareTo(start.x);
+        if (comparison == 0)
             return start;
-        else if (comp < 0) {
-            if (start.Left == null || start.Left.x == null) return null;
+        else if (comparison < 0) {
+            //если это последний эл в дереве
+            if (start.Left == null || start.Left.isEmpty()) return null;
             return find(start.Left, value);
         }
         else {
-            if (start.Right == null || start.Right.x == null) return null;
+            if (start.Right == null || start.Right.isEmpty()) return null;
             return find(start.Right, value);
         }
     }
-
 
 
     /**
@@ -110,10 +110,10 @@ public class Treap<T extends Comparable<T>> implements Set<T> {
      */
 
     public Treap<T> Merge(Treap<T> L, Treap<T> R) {
-        if (L == null || L.x == null) {
+        if (L == null || L.isEmpty()) {
             return R;
         }
-        if (R == null || R.x == null) {
+        if (R == null || R.isEmpty()) {
             return L;
         }
 
@@ -128,7 +128,6 @@ public class Treap<T extends Comparable<T>> implements Set<T> {
 
         }
         else {
-            //если приотритет корня левого меньше приоритета корня правого
             Treap<T> newL = Merge(L, R.Left);
             result = new Treap<>(R.x, R.y, newL, R.Right);
         }
@@ -195,11 +194,10 @@ public class Treap<T extends Comparable<T>> implements Set<T> {
      */
 
     boolean add(T x, Integer y) {
-        //если такой элемент уже есть
         if (x == null || contains(x))
             return false;
         //если дерево пустое и мы добавляем первый эелемент
-        if (isEmpty() || this.x == null) {
+        if (this.isEmpty()) {
             this.x = x;
             this.y = y;
             this.Left = new Treap<>();
@@ -249,25 +247,21 @@ public class Treap<T extends Comparable<T>> implements Set<T> {
      */
 
     public Treap<T> findParent(T value) {
-        //если элемента нет в дереве
         if (!contains(value))
             throw new IllegalArgumentException("Элемента нет в дереве");
-        //если дерево пустое
         if (this.x == null) return null;
         return findParent(this, value);
     }
 
     public Treap<T> findParent(Treap<T> start, T value) {
-        //нахождение в дереве start
         int comp = value.compareTo(start.x);
         if(comp == 0)
             return null;//если элемент оказался корнем
         else if (comp < 0) {
-            if (start.Left == null) return start;
+            //если левый у элемента равен входному
             if (start.Left.x.compareTo(value) == 0) return start;
             return findParent(start.Left, value);
         } else {
-            if (start.Right == null) return start;
             if (start.Right.x.compareTo(value) == 0) return start;
             return findParent(start.Right, value);
         }
@@ -281,14 +275,11 @@ public class Treap<T extends Comparable<T>> implements Set<T> {
     @Override
     public boolean remove(Object o) {
         T value = (T) o;
-        //если дерево пустое или в нем нет такого элемента
         if (this.x == null || !this.contains(value))
             return false;
-        //находим сам элемент
         Treap<T> treap = find(value);
         //удаляем корень
         Treap<T> result = Merge(treap.Left, treap.Right);
-        //находим родителя
         Treap<T> parent = findParent(value);
         //если элемент был корнем
         if (parent == null || parent.x == null) {
@@ -402,8 +393,9 @@ public class Treap<T extends Comparable<T>> implements Set<T> {
     }
 
     /**
-     * Элементы дерева помещаются в массив элементов
+     * Возвращает массив оапределнного типа данных
      */
+
 
     @SuppressWarnings("unchecked")
     @Override
@@ -441,11 +433,18 @@ public class Treap<T extends Comparable<T>> implements Set<T> {
     public int deep(Treap<T> start) {
         if (start == null || start.x == null)
             return 0;
-        return Math.max(deep(start.Left), deep(start.Left)) + 1;
+        else {
+            int l = deep(start.Left);
+            int r = deep(start.Right);
+            if (l > r) {
+                return l + 1;
+            }
+            else return r + 1;
+        }
     }
 
     int deep() {
-        return deep(this);
+         return deep(this);
     }
 
     /**

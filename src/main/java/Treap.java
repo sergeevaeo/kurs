@@ -410,7 +410,7 @@ public class Treap<T extends Comparable<T>> implements Set<T> {
     }
 
     /**
-     * Удаляет те элементы, которые есть в коллекции
+     * Удаляет те элементы, которыx нет в коллекции
      */
 
     @Override
